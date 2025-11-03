@@ -1,0 +1,13 @@
+# gradle.properties
+minecraft_version=1.21.1
+neo_version=21.1.97
+mod_version=${System.env.GITHUB_REF_TYPE == 'tag' ? System.env.GITHUB_REF_NAME : '1.0.0'}
+ftb_teams_version=2101.1.2
+
+# Публикация
+modrinth_id=YOUR_MODRINTH_PROJECT_ID
+curseforge_id=YOUR_CURSEFORGE_PROJECT_ID
+
+# Java совместимость
+source_compatibility=17
+target_compatibility=17

@@ -1,0 +1,79 @@
+// build.gradle
+plugins {
+    id 'java'
+    id 'net.neoforged.gradle.userdev' version '7.0.80'
+}
+
+version = '1.21.1-1.0.0'
+group = 'com.clefal.ft_offline_enabler'
+archivesBaseName = 'FTB-Teams-Offline-Enabler'
+
+// Совместимость с Java 17
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+neoForge {
+    version = project.neo_version
+    
+    runs {
+        client {
+            workingDirectory project.file('run')
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            systemProperty 'forge.logging.console.level', 'debug'
+            modSource project.sourceSets.main
+        }
+
+        server {
+            workingDirectory project.file('run')
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            systemProperty 'forge.logging.console.level', 'debug'
+            modSource project.sourceSets.main
+        }
+        
+        data {
+            workingDirectory project.file('run')
+            programArguments.addAll '--mod', 'ftb_teams_offline_enabler', '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+            modSource project.sourceSets.main
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        url "https://maven.neoforged.net/releases/"
+    }
+    maven {
+        url "https://maven.saps.dev/minecraft"
+        content {
+            includeGroup "dev.latvian.mods"
+            includeGroup "dev.ftb.mods"
+        }
+    }
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:${project.neo_version}"
+    
+    // FTB Teams dependency
+    implementation "dev.ftb.mods:ftb-teams-neoforge:${project.ftb_teams_version}"
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title": "FTB Teams Offline Enabler",
+            "Specification-Vendor": "clefal",
+            "Specification-Version": "1",
+            "Implementation-Title": project.name,
+            "Implementation-Version": project.jar.archiveVersion,
+            "Implementation-Vendor": "clefal",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}

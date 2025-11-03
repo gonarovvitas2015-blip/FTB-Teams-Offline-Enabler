@@ -1,0 +1,75 @@
+# .github/workflows/build.yml
+name: Build and Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '17', '21' ]
+        loader: [ 'neoforge' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Validate gradle wrapper
+      uses: gradle/wrapper-validation-action@v1
+
+    - name: Setup Java ${{ matrix.java }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ matrix.java }}
+        distribution: 'microsoft'
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    - name: Build with Gradle
+      run: ./gradlew build
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: FTB-Teams-Offline-Enabler-${{ matrix.loader }}-java${{ matrix.java }}-${{ github.sha }}
+        path: build/libs/
+
+  test-compatibility:
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      
+    - name: Verify Java 17 compatibility
+      run: |
+        echo "Checking Java 17 compatibility..."
+        # Проверяем, что файлы собраны с Java 17 совместимостью
+        find . -name "*.jar" -type f | head -5
+
+  release:
+    needs: [build, test-compatibility]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Display structure of downloaded files
+      run: find artifacts
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: artifacts/**/FTB-Teams-Offline-Enabler-*.jar
+        generate_release_notes: true

@@ -1,0 +1,85 @@
+// build.gradle (дополнение для публикации с Java 17)
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = archivesBaseName
+            
+            pom {
+                name = 'FTB Teams Offline Enabler'
+                description = 'Enables FTB Teams functionality in offline mode'
+                url = 'https://github.com/zzydd/FTB-Teams-OfflineFix'
+                
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id = 'clefal'
+                        name = 'clefal'
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Плагин для публикации
+plugins {
+    id 'com.modrinth.minotaur' version '2.+'
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
+}
+
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN")
+    projectId = modrinth_id
+    versionNumber = mod_version
+    versionType = "release"
+    uploadFile = remapJar
+    gameVersions = [minecraft_version]
+    loaders = ["neoforge"]
+    dependencies {
+        required.project "ftb-teams"
+        required.project "neoforge"
+    }
+}
+
+curseforge {
+    apiKey = System.getenv("CURSEFORGE_TOKEN")
+    project {
+        id = curseforge_id
+        releaseType = "release"
+        changelogType = "markdown"
+        changelog = file("CHANGELOG.md")
+        
+        addGameVersion minecraft_version
+        addGameVersion "NeoForge"
+        addGameVersion "Java 17"
+        
+        mainArtifact(remapJar) {
+            displayName = "FTB Teams Offline Enabler ${mod_version}"
+        }
+        
+        relations {
+            requiredDependency "ftb-teams"
+            requiredDependency "neoforge"
+        }
+    }
+}
+
+// Проверка совместимости с Java 17
+tasks.register('checkJavaCompatibility') {
+    doLast {
+        def javaVersion = JavaVersion.current()
+        println "Current Java version: $javaVersion"
+        if (javaVersion < JavaVersion.VERSION_17) {
+            throw new GradleException("Java 17 or higher is required. Current version: $javaVersion")
+        }
+    }
+}
+
+build.dependsOn checkJavaCompatibility
